@@ -1,0 +1,246 @@
+{% extends 'energy_app/base.html' %}  <!-- ✅ FIXED: base.html not energy_app/base.html -->
+{% load static %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>⚡ Energy Dashboard</h1>
+        <p class="lead">Real-time monitoring & optimization</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>📊 Energy Usage Chart (Live)</h5>
+                <span class="badge bg-success">Auto-refreshing</span>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="usageChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">📈 Today's Total: <span id="totalUsage">{{ total_daily|floatformat:2 }} kWh</span></h6>
+            </div>
+            <div class="card-body py-3">
+                {% for device in devices %}
+                <div class="device-item mb-3 p-2 border rounded {% if device.status %}border-start border-success border-3 bg-light{% else %}border-secondary{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">{{ device.name }}</h6>
+                            <small class="text-muted">{{ device.get_device_type_display }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-1">
+                                <span class="badge bg-light text-dark fs-6">{{ device.power_rating }}W</span>
+                            </div>
+                            <button class="btn btn-sm {% if device.status %}btn-danger{% else %}btn-success{% endif %} toggle-btn px-3"
+                                    data-device="{{ device.id }}">
+                                {% if device.status %}🔴 OFF{% else %}🟢 ON{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-bolt fa-3x text-muted"></i>
+                    </div>
+                    <h6 class="text-muted">No devices connected</h6>
+                    <p class="text-muted small">Add devices from <a href="{% url 'devices' %}">Devices page</a></p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card mt-3 shadow">
+            <div class="card-header">
+                <h6>🔔 Alerts & Insights</h6>
+            </div>
+            <div class="card-body">
+                <div id="alerts">
+                    <div class="alert alert-info border-0" role="alert">
+                        💡 <strong>Pro Tip:</strong> Turning off unused devices saves up to 25% energy!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Replace the script block in dashboard.html with this: -->
+<script>
+// ✅ FIXED: Complete working dashboard script
+let chart = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔥 Dashboard loading...');
+    initDashboard();
+});
+
+function initDashboard() {
+    initChart();
+    setupToggleButtons();
+    loadEnergyData();
+    loadTotalUsage();
+    setInterval(updateDashboard, 3000);
+}
+
+function initChart() {
+    const ctx = document.getElementById('usageChart');
+    if (!ctx) return console.error('No chart canvas');
+    
+    chart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: { labels: [], datasets: [{
+            label: 'Energy (KWh)',
+            data: [],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.2)',
+            tension: 0.4,
+            fill: true
+        }] },
+        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+}
+
+function loadEnergyData() {
+    fetch('/api/energy/')
+        .then(r => r.json())
+        .then(data => {
+            console.log('📊 Data loaded:', data.readings?.length || 0, 'readings');
+            updateChart(data.readings || []);
+        });
+}
+
+function loadTotalUsage() {
+    fetch('/api/total/?period=day')
+        .then(r => r.json())
+        .then(data => {
+            console.log('💰 Total:', data.total_kwh, 'kWh');
+            document.getElementById('totalUsage').textContent = (data.total_kwh || 0).toFixed(2) + ' kWh';
+        });
+}
+
+function updateDashboard() {
+    loadEnergyData();
+    loadTotalUsage();
+}
+
+// function updateChart(readings) {
+//     if (!chart || !readings.length) {
+//         chart.data.labels = ['No', 'data', 'yet'];
+//         chart.data.datasets[0].data = [0, 0, 0];
+//     } else {
+//         const recent = readings.slice(0, 12).reverse();
+//         chart.data.labels = recent.map(r => new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));
+//         chart.data.datasets[0].data = recent.map(r => parseFloat(r.energy_consumed));
+       
+//     }
+//     chart.update();
+// }
+
+
+function updateChart(readings) {
+    if (!chart || !readings.length) {
+        chart.data.labels = ['No', 'data', 'yet'];
+        chart.data.datasets[0].data = [0, 0, 0];
+    } else {
+        const recent = readings.slice(0, 12).reverse();
+
+        chart.data.labels = recent.map(r =>
+            new Date(r.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        );
+
+        chart.data.datasets[0].data = recent.map(
+            r => parseFloat(r.energy_consumed) / 1000
+        );
+    }
+
+    chart.update();
+}
+
+function setupToggleButtons() {
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const deviceId = this.dataset.device;
+            console.log('🔄 Toggling:', deviceId);
+            toggleDevice(deviceId, this);
+        };
+    });
+}
+
+// function toggleDevice(deviceId, button) {
+//     // ✅ FIXED SYNTAX ERROR
+//     fetch(`/api/devices/${deviceId}/toggle/`, {
+//         method: 'POST',
+//         headers: {'X-CSRFToken': getCookie('csrftoken')}
+//     })
+//     .then(r => r.json())
+//     .then(data => {
+//         console.log('Toggle result:', data);
+//         const isOn = data.status;
+//         button.innerHTML = isOn ? '🔴 OFF' : '🟢 ON';
+//         button.className = `btn btn-sm ${isOn ? 'btn-danger' : 'btn-success'} toggle-btn px-3`;
+//     });
+// }
+
+
+function toggleDevice(deviceId, button) {
+    fetch(`/api/devices/${deviceId}/toggle/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    })
+    .then(r => r.json())
+    .then(data => {
+        const isOn = data.status;
+
+        // ✅ Update button
+        button.innerHTML = isOn ? '🔴 OFF' : '🟢 ON';
+        button.className = `btn btn-sm ${isOn ? 'btn-danger' : 'btn-success'} toggle-btn px-3`;
+
+        // ✅ Update card UI (THIS IS WHAT YOU WERE MISSING)
+        const card = button.closest('.device-item');
+
+        if (isOn) {
+            card.classList.add('bg-light', 'border-start', 'border-success', 'border-3');
+            card.classList.remove('border-secondary');
+        } else {
+            card.classList.remove('bg-light', 'border-start', 'border-success', 'border-3');
+            card.classList.add('border-secondary');
+        }
+    });
+}
+
+// CSRF Helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+console.log('Clicked device:', deviceId);
+</script>
+{% endblock %}
+

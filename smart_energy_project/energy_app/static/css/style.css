@@ -1,0 +1,29 @@
+.device-item {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.device-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+.device-item.on {
+    border-left: 4px solid #28a745;
+}
+
+.device-item.off {
+    border-left: 4px solid #6c757d;
+}
+
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+#usageChart {
+    max-height: 400px;
+}
