@@ -25,9 +25,19 @@
     
     <div class="col-md-4">
         <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                 <!-- <a href="/export/" class="btn btn-success mt-2">📄 Download Report</a> -->
-                <h6  class="mb-0">📈 Today's Total: <span id="totalUsage">{{ total_daily|floatformat:2 }} kWh</span><a href="/export/" class="btn btn-success mt-2">📄 Download Report</a></h6>
+            <div class="card-header bg-primary text-white d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+
+                <!-- LEFT: Title -->
+                <h6 class="mb-0">
+                    📈 Today's Total:
+                    <span id="totalUsage">{{ total_daily|floatformat:2 }} kWh</span>
+                </h6>
+
+                <!-- RIGHT: Download Button -->
+                <a href="/export/" class="btn btn-success btn-sm w-100 w-md-auto text-center">
+                    📄 Download Report
+                </a>
+
             </div>
             <div class="card-body py-3">
                 {% for device in devices %}
