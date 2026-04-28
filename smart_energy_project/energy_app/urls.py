@@ -26,5 +26,5 @@ urlpatterns = [
     path('api/devices/', views.api_devices, name='api_devices'),
     path('api/devices/<uuid:device_id>/toggle/', views.api_toggle_device, name='api_toggle_device'),
     path('api/energy/', views.api_energy_data, name='api_energy'),
-    path('api/total/', views.api_total_usage, name='api_total'),  # ✅ NEW
+    path('api/total/', views.api_total_usage, name='api_total'),  
 ]

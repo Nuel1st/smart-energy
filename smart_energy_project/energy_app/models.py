@@ -22,7 +22,7 @@ class Device(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.name} ({self.get_device_type_display()})"
+        return f"{self.name} ({self.get_device_type_display()})"  
 
 class EnergyReading(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
@@ -40,6 +40,4 @@ class UserThreshold(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     daily_threshold = models.FloatField(default=10.0, help_text="kWh per day")
     weekly_threshold = models.FloatField(default=70.0, help_text="kWh per week")
-
-
 

@@ -1,0 +1,11 @@
+There are alot unnecessary tables in the models, that needs to be removed. 
+
+settings.py, apps.py, admin.py, test.py
+
+Always update every 20mins and return the ladder to the first page. 
+
+The dashboard is currently working fine and i will suggest we go through the whole thing again after each refresh. 
+
+Update("Always")
+
+

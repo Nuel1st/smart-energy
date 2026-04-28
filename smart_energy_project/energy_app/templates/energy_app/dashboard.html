@@ -20,11 +20,14 @@
             </div>
         </div>
     </div>
+ <!-- <a href="/export/" class="btn btn-success mt-2">📄 Download Report</a> -->
+   
     
     <div class="col-md-4">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <h6 class="mb-0">📈 Today's Total: <span id="totalUsage">{{ total_daily|floatformat:2 }} kWh</span></h6>
+                 <!-- <a href="/export/" class="btn btn-success mt-2">📄 Download Report</a> -->
+                <h6  class="mb-0">📈 Today's Total: <span id="totalUsage">{{ total_daily|floatformat:2 }} kWh</span><a href="/export/" class="btn btn-success mt-2">📄 Download Report</a></h6>
             </div>
             <div class="card-body py-3">
                 {% for device in devices %}
@@ -239,6 +242,23 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+
+function loadTotalUsage() {
+    fetch('/api/total/?period=day')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('totalUsage').textContent =
+            (data.total_kwh || 0).toFixed(2) + ' kWh';
+
+        if (data.alert) {
+            alert(data.alert);
+
+            let audio = new Audio('/static/alert.mp3');
+            audio.play();
+        }
+    });
+} 
 
 console.log('Clicked device:', deviceId);
 </script>

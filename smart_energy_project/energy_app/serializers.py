@@ -24,3 +24,8 @@ class UserThresholdSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserThreshold
         fields = '__all__'
+
+class UserThresholdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserThreshold
+        fields = '__all__'
